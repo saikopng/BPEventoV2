@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar, View, Text, StyleSheet, TouchableOpacity, TextInput, Button, ScrollView, Image } from "react-native";
-import ButtonGradient from "../Botones/button";
 import Categorias from "../Components/Categoria";
 import Comunas from '../Components/Comuna';
 import FechaPicker from '../Components/fecha';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
+import { format } from 'date-fns';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 
 const EventCreate = () => {
   const navigation = useNavigation();
   const [eventName, setEventName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedComuna, setSelectedComuna] = useState("");
   const [selectedDate, setSelectedDate,] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [hasFocused, setHasFocused] = useState(false);
@@ -22,12 +25,18 @@ const EventCreate = () => {
   const [additionalTextInputs, setAdditionalTextInputs] = useState(['']);
   const [description, setDescription] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  
 
   const handlePublishEvent = async () => {
+    const formattedDate = format(selectedDate, 'yyyy-MM-dd');
     // Prepara los datos del evento a enviar al servidor
     const eventData = {
       nombre: eventName, // Reemplaza con el nombre del evento que el usuario ingresó
-      fecha: selectedDate, // Reemplaza con la fecha del evento
+      fecha: formattedDate, // Reemplaza con la fecha del evento
+      hora: selectedTime.toLocaleTimeString(),
       descripcion: description, // Reemplaza con la descripción del evento
     };
   
@@ -44,6 +53,13 @@ const EventCreate = () => {
       // En caso de error, maneja la situación, muestra un mensaje de error, etc.
       console.error('Error al crear el evento:', error);
     }
+  };
+
+  const handleTimeChange = (event, selected) => {
+    if (event.type === 'set') {
+      setSelectedTime(selected);
+    }
+    setShowTimePicker(false);
   };
 
   const handleDateChange = (date) => {
@@ -79,7 +95,7 @@ const EventCreate = () => {
   const selectImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync();
 
-    if (!result.cancelled) {
+    if (!result.canceled) {
       setSelectedImage(result.uri);
     }
   };
@@ -98,8 +114,8 @@ const EventCreate = () => {
         onCategoryChange={setSelectedCategory}
       />
       <Comunas
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        selectedCategory={selectedComuna}
+        onCategoryChange={setSelectedComuna}
       />
       <Text>Selecciona la fecha</Text>
       <FechaPicker
@@ -108,6 +124,19 @@ const EventCreate = () => {
         showDatePicker={showDatePicker}
         setShowDatePicker={setShowDatePicker}
       />
+      <Text>Selecciona la hora de inicio</Text>
+      <TouchableOpacity onPress={() => setShowTimePicker(true)}>
+        <Text>{selectedTime.toLocaleTimeString()}</Text>
+      </TouchableOpacity>
+      {showTimePicker && (
+        <DateTimePicker
+          value={selectedTime}
+          mode="time"
+          is24Hour={true}
+          display="clock"
+          onChange={handleTimeChange}
+        />
+      )}
       <Text>Cantidad de usuarios permitidos:</Text>
       <TextInput
         placeholder="Cantidad mínima: 1"
@@ -151,10 +180,13 @@ const EventCreate = () => {
       <TouchableOpacity onPress={selectImage}>
         <Text>Selecciona una imagen</Text>
       </TouchableOpacity>
-      <ButtonGradient onPress={() => {
-                      console.log('Botón de Publicar presionado');
-                      handlePublishEvent();
-                      }}/>
+      <Button
+        title="Publicar"
+        onPress={() => {
+          console.log('Botón de Publicar presionado');
+          handlePublishEvent();
+        }}
+      />
 
       <StatusBar style="auto" />
     </ScrollView>

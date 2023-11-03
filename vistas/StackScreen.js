@@ -7,7 +7,7 @@ const StackScreen = () => {
             <Text
                 style={{
                     fontSize: 30,
-                    textAling: "center",
+                    textAlign: "center",
                     marginTop: "20%"
                 }}
             >Stack Screen</Text>
